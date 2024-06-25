@@ -261,12 +261,12 @@ class PostgreSQLDatabaseAggregates(AggregatesDatabaseInterface):
     def _format_aggregates_data(self, data: Tuple) -> Dict:
         formatted_data = [self._always_str_or_none(value) for value in data]
         return {
-            "territory_id": formatted_data[0],
-            "url_zip": formatted_data[1],
-            "year": formatted_data[2],
-            "last_updated": formatted_data[3],
-            "hash_info": formatted_data[4],
-            "file_size": formatted_data[5]
+            "territory_id": formatted_data[1],
+            "url_zip": formatted_data[2],
+            "year": formatted_data[3],
+            "last_updated": formatted_data[4],
+            "hash_info": formatted_data[5],
+            "file_size": formatted_data[6]
         }
 
     def get_aggregates(self, territory_id: str = "", state_code: str = "") -> Union[Aggregates, None]:

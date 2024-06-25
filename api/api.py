@@ -89,7 +89,6 @@ class EntitiesSearchResponse(BaseModel):
     entities: List[Entity]
 
 class Aggregates(BaseModel):
-    id: str
     territory_id: str
     state_code: str
     url_zip: str
