@@ -7,15 +7,14 @@ import psycopg2
 from companies import Company, InvalidCNPJException, Partner, CompaniesDatabaseInterface
 from aggregates import AggregatesDatabaseInterface, Aggregates
 
-
-class PostgreSQLDatabase(CompaniesDatabaseInterface):
+class PostgreSQLDatabase:
     def __init__(self, host, database, user, password, port):
         self.host = host
         self.database = database
         self.user = user
         self.password = password
         self.port = port
-
+        
     def _select(self, command: str, data: Dict = {}) -> Iterable[Tuple]:
         connection = psycopg2.connect(
             dbname=self.database,
@@ -31,6 +30,18 @@ class PostgreSQLDatabase(CompaniesDatabaseInterface):
                 logging.debug(entry)
                 yield entry
             logging.debug(f"Finished query: {cursor.query}")
+    
+    def _always_str_or_none(self, data: Any) -> Union[str, None]:
+        if data == "None" or data == "" or data is None:
+            return None
+        elif not isinstance(data, str):
+            return str(data)
+        else:
+            return data
+
+class PostgreSQLDatabaseCompanies(PostgreSQLDatabase, CompaniesDatabaseInterface):
+    def __init__(self, host, database, user, password, port):
+        super().__init__(host, database, user, password, port)
 
     def get_company(self, cnpj: str = "") -> Union[Company, None]:
         command = """
@@ -154,14 +165,6 @@ class PostgreSQLDatabase(CompaniesDatabaseInterface):
             faixa_etaria=formatted_data[11],
         )
 
-    def _always_str_or_none(self, data: Any) -> Union[str, None]:
-        if data == "None" or data == "" or data is None:
-            return None
-        elif not isinstance(data, str):
-            return str(data)
-        else:
-            return data
-
     def _is_valid_cnpj(self, cnpj: str) -> bool:
         cnpj_only_digits = self._cnpj_only_digits(cnpj)
         if cnpj_only_digits == "" or len(cnpj_only_digits) > 14:
@@ -226,37 +229,9 @@ class PostgreSQLDatabase(CompaniesDatabaseInterface):
             cnpj_dv=str(cnpj_dv).zfill(2),
         )
 
-class PostgreSQLDatabaseAggregates(AggregatesDatabaseInterface):
+class PostgreSQLDatabaseAggregates(PostgreSQLDatabase, AggregatesDatabaseInterface):
     def __init__(self, host, database, user, password, port):
-        self.host = host
-        self.database = database
-        self.user = user
-        self.password = password
-        self.port = port
-        
-    def _select(self, command: str, data: Dict = {}) -> Iterable[Tuple]:
-        connection = psycopg2.connect(
-            dbname=self.database,
-            user=self.user,
-            password=self.password,
-            host=self.host,
-            port=self.port,
-        )
-        with connection.cursor() as cursor:
-            cursor.execute(command, data)
-            logging.debug(f"Starting query: {cursor.query}")
-            for entry in cursor:
-                logging.debug(entry)
-                yield entry
-            logging.debug(f"Finished query: {cursor.query}")
-    
-    def _always_str_or_none(self, data: Any) -> Union[str, None]:
-        if data == "None" or data == "" or data is None:
-            return None
-        elif not isinstance(data, str):
-            return str(data)
-        else:
-            return data
+        super().__init__(host, database, user, password, port)
         
     def _format_aggregates_data(self, data: Tuple) -> Dict:
         formatted_data = [self._always_str_or_none(value) for value in data]
@@ -271,37 +246,29 @@ class PostgreSQLDatabaseAggregates(AggregatesDatabaseInterface):
         }
 
     def get_aggregates(self, territory_id: Optional[str] = None, state_code: str = "") -> Union[List[Aggregates], None]:
+        command = """
+            SELECT
+                *
+            FROM
+                aggregates
+            WHERE
+                state_code = %(state_code)s
+                AND
+                territory_id {territory_id_query_statement}
+        """
+        
+        data = {
+            "state_code": state_code
+        }
+        
         if territory_id is None:
-            command = """
-                SELECT
-                    *
-                FROM
-                    aggregates
-                WHERE
-                    state_code = %(state_code)s
-                    AND
-                    territory_id IS NULL
-            """
-            data = {
-                "state_code": state_code
-            }
+            command = command.format(territory_id_query_statement="IS NULL")
         else:
-            command = """
-                SELECT
-                    *
-                FROM
-                    aggregates
-                WHERE
-                    territory_id = %(territory_id)s 
-                    AND 
-                    state_code = %(state_code)s
-            """
-            data = {
-                "territory_id": territory_id,
-                "state_code": state_code
-            }
+            data["territory_id"] = territory_id
+            command = command.format(territory_id_query_statement="= %(territory_id)s")
 
         results = list(self._select(command, data))
+        
         if not results:
             return []
         
