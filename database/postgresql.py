@@ -269,7 +269,7 @@ class PostgreSQLDatabaseAggregates(PostgreSQLDatabase, AggregatesDatabaseInterfa
             return []
         
         return (
-            [self._format_aggregates_data(result).to_dict() for result in results]
+            [vars(self._format_aggregates_data(result)) for result in results]
         )
 
     
