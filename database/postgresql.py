@@ -40,8 +40,6 @@ class PostgreSQLDatabase:
             return data
 
 class PostgreSQLDatabaseCompanies(PostgreSQLDatabase, CompaniesDatabaseInterface):
-    def __init__(self, host, database, user, password, port):
-        super().__init__(host, database, user, password, port)
 
     def get_company(self, cnpj: str = "") -> Union[Company, None]:
         command = """
@@ -230,8 +228,6 @@ class PostgreSQLDatabaseCompanies(PostgreSQLDatabase, CompaniesDatabaseInterface
         )
 
 class PostgreSQLDatabaseAggregates(PostgreSQLDatabase, AggregatesDatabaseInterface):
-    def __init__(self, host, database, user, password, port):
-        super().__init__(host, database, user, password, port)
         
     def _format_aggregates_data(self, data: Tuple) -> Dict:
         formatted_data = [self._always_str_or_none(value) for value in data]
