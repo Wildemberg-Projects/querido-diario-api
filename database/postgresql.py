@@ -229,17 +229,17 @@ class PostgreSQLDatabaseCompanies(PostgreSQLDatabase, CompaniesDatabaseInterface
 
 class PostgreSQLDatabaseAggregates(PostgreSQLDatabase, AggregatesDatabaseInterface):
         
-    def _format_aggregates_data(self, data: Tuple) -> Dict:
+    def _format_aggregates_data(self, data: Tuple) -> Aggregates:
         formatted_data = [self._always_str_or_none(value) for value in data]
-        return {
-            "territory_id": formatted_data[1],
-            "state_code": formatted_data[2],
-            "url_zip": formatted_data[3],
-            "year": formatted_data[4],
-            "last_updated": formatted_data[5],
-            "hash_info": formatted_data[6],
-            "file_size": formatted_data[7]
-        }
+        return Aggregates(
+            territory_id=formatted_data[1],
+            state_code=formatted_data[2],
+            file_path=formatted_data[3],
+            year=formatted_data[4],
+            last_updated=formatted_data[5],
+            hash_info=formatted_data[6],
+            file_size_mb=formatted_data[7]
+        )
 
     def get_aggregates(self, territory_id: Optional[str] = None, state_code: str = "") -> Union[List[Aggregates], None]:
         command = """
@@ -269,7 +269,7 @@ class PostgreSQLDatabaseAggregates(PostgreSQLDatabase, AggregatesDatabaseInterfa
             return []
         
         return (
-            [self._format_aggregates_data(result) for result in results]
+            [self._format_aggregates_data(result).to_dict() for result in results]
         )
 
     

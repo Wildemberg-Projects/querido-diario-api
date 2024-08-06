@@ -1,5 +1,5 @@
 import abc
-from typing import Optional
+from typing import Optional, Dict
 
 class AggregatesDatabaseInterface(abc.ABC):
     """
@@ -59,6 +59,16 @@ class Aggregates:
     def __repr__(self):
         return f"Aggregates(territory_id={self.territory_id}, state_code={self.state_code}, file_path={self.file_path}, year={self.year}, last_updated={self.last_updated}, hash_info={self.hash_info}, file_size_mb={self.file_size_mb})"
     
+    def to_dict(self) -> Dict:
+        return {
+            "territory_id": self.territory_id,
+            "state_code": self.state_code,
+            "file_path": self.file_path,
+            "year": self.year,
+            "last_updated": self.last_updated,
+            "hash_info": self.hash_info,
+            "file_size_mb": self.file_size_mb
+        }
 def create_aggregates_interface(database_gateway: AggregatesDatabaseInterface) -> AggregatesAccessInterface:
     if not isinstance(database_gateway, AggregatesDatabaseInterface):
         raise Exception(
