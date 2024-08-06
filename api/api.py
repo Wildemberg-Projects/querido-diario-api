@@ -576,10 +576,8 @@ async def get_partners(
         },)
 async def get_aggregates(territory_id: Optional[str] = Query(None, description="City's 7-digit IBGE ID."), 
                         state_code: str = Path(..., description="City's state code.")):
-    try:
-        aggregates = app.aggregates.get_aggregates(territory_id, state_code.upper())
-    except Exception as exc:
-        return JSONResponse(status_code=404, content={"detail": str(exc)})
+    
+    aggregates = app.aggregates.get_aggregates(territory_id, state_code.upper())
        
     if not aggregates:
         return JSONResponse(status_code=404, content={"detail":"No aggregate file was found for the data reported."})
